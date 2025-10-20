@@ -1,0 +1,44 @@
+services:
+  db:
+    container_name: library-db
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: books
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  backend:
+    container_name: library-backend
+    build: ./Backend
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: books
+      DB_SSLMODE: disable
+      CORS_ALLOW_ORIGIN: http://localhost:5173
+    ports:
+      - "8080:8080"
+    command: ["./server"]
+
+  frontend:
+    container_name: library-frontend
+    build: ./Frontend
+    depends_on:
+      - backend
+    environment:
+      VITE_API_BASE_URL: http://localhost:8080
+    ports:
+      - "5173:5173"
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+
+volumes:
+  db_data:
